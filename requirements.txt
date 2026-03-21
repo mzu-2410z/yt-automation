@@ -1,0 +1,17 @@
+# Core
+requests
+Pillow
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+python-dotenv
+
+# TTS — install the one matching your TTS_ENGINE in config.py
+# Kokoro (recommended):
+kokoro-onnx
+soundfile
+
+# Coqui (alternative — large download ~2GB):
+# TTS
+
+# Piper — no pip install needed, download exe from GitHub releases
