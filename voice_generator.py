@@ -44,7 +44,11 @@ def _generate_kokoro(sections: list[dict], audio_dir: Path) -> list[Path]:
         )
 
     print(f"      Kokoro voice: {config.KOKORO_VOICE} | speed: {config.KOKORO_SPEED}")
-    kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
+    BASE_DIR = Path(__file__).parent
+    kokoro = Kokoro(
+        str(BASE_DIR / "kokoro-v1.0.onnx"),
+        str(BASE_DIR / "voices-v1.0.bin")
+    )
 
     paths = []
     for section in sections:

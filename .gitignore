@@ -140,6 +140,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+.history/
 ENV/
 env.bak/
 venv.bak/
@@ -205,3 +206,41 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+client_secret.json
+
+
+
+
+# Secrets — never push these
+.env
+client_secrets.json
+youtube_token.pkl
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Job output files
+workspace/
+
+# Kokoro model files (large, re-downloadable)
+*.onnx
+*.bin
+
+# OS
+.DS_Store
+Thumbs.db
+voices-v1.0.bin
