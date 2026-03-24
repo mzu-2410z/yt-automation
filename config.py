@@ -42,12 +42,12 @@ PIXABAY_API_KEY  = os.getenv("PIXABAY_API_KEY", "")
 FOOTAGE_PREFER       = "pexels"
 FOOTAGE_FALLBACK     = "pixabay"
 FOOTAGE_PER_POINT    = 1
-FOOTAGE_ORIENTATION  = "landscape"
+FOOTAGE_ORIENTATION  = "portrait"    # vertical for Shorts
 FOOTAGE_MIN_DURATION = 5
 
-# ── Video Output ─────────────────────────────────────────────
-OUTPUT_WIDTH  = 1920
-OUTPUT_HEIGHT = 1080
+# ── Video Output — Vertical for YouTube Shorts (9:16) ────────
+OUTPUT_WIDTH  = 1080
+OUTPUT_HEIGHT = 1920
 OUTPUT_FPS    = 30
 
 # ── Visual Overlay Style ─────────────────────────────────────

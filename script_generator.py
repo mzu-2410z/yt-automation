@@ -21,39 +21,70 @@ You understand viewer psychology, retention tactics, and what makes people stop 
 Your scripts are punchy, specific, and immediately valuable — never vague or filler-heavy.
 You always respond with valid JSON only. No markdown fences, no explanation, no extra text before or after the JSON."""
 
-USER_TEMPLATE = """Write a 60-90 second faceless YouTube video script about: "{topic}"
+USER_TEMPLATE = """Write a YouTube Shorts script (under 50 seconds when spoken) about: "{topic}"
 
-The script must follow proven YouTube retention psychology:
-- Hook: The intro must create IMMEDIATE curiosity or fear of missing out. Start with a bold claim,
-  a surprising fact, or a direct challenge. Never start with "In this video" or "Today we will".
-  The viewer must feel they NEED to keep watching within the first 3 seconds.
-- Points: Each point delivers one clear, surprising, or counter-intuitive insight. Prefer
-  specific facts over vague advice. Make the viewer feel smarter after each point.
-- Outro: End with urgency. Tell them exactly what to do (like, subscribe) and why it benefits THEM.
+This is a VERTICAL SHORT VIDEO. Every word counts. Be punchy, fast, and specific.
 
-Return ONLY a valid JSON object with this exact structure — no other text:
+STRICT WORD BUDGET — spoken at 130 words/minute, target 85-105 total words:
+- intro:          12-15 words  (3-4 seconds — instant hook, no warmup)
+- point 1 body:   18-22 words  (8-10 seconds)
+- point 2 body:   18-22 words  (8-10 seconds)
+- point 3 body:   18-22 words  (8-10 seconds)
+- outro:          10-12 words  (4-5 seconds — short, punchy CTA)
+- TOTAL:          76-93 words  = 35-43 seconds spoken. DO NOT exceed 93 words total.
+
+Shorts retention rules:
+- Intro: One sentence. Shocking fact, bold claim, or direct challenge. No warmup. No "today" or
+  "in this video". Viewer must be hooked in 2 seconds or they scroll. Make it feel urgent.
+- Each point: One sharp, specific insight. Named psychological concepts, real numbers, or
+  counter-intuitive facts only. No generic advice. Make the viewer feel they learned something
+  they can use or tell someone else immediately.
+- Outro: Maximum 12 words. Direct CTA — follow for more, like if this surprised you. That's it.
+
+Return ONLY a valid JSON object — nothing before or after:
 {{
-  "title": "YouTube title using curiosity gap or strong number (max 60 chars, no clickbait)",
-  "description": "2-3 sentence YouTube description packed with searchable keywords for this topic",
+  "title": "Shorts-optimised title, max 60 chars, uses curiosity gap or strong number",
+  "description": "2-3 sentences with searchable keywords for this topic",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7"],
-  "intro": "Hook sentence — bold, specific, creates curiosity. STRICT MAX 25 words.",
-  "outro": "Call to action — personal benefit framing for subscribing. STRICT MAX 18 words.",
+  "intro": "12-15 WORDS EXACTLY. One shocking hook sentence.",
+  "outro": "10-12 WORDS EXACTLY. Short punchy call to action.",
   "points": [
     {{
-      "heading": "3-5 word heading, punchy and specific",
-      "body": "One clear insight, fact, or tip. Conversational. Spoken naturally. STRICT MAX 28 words.",
-      "footage_query": "Concrete 3-5 word phrase to search stock video (visual, specific — e.g. 'person meditating sunrise', 'brain neurons firing')"
+      "heading": "2-4 word heading, punchy",
+      "body": "18-22 WORDS EXACTLY. One specific insight, spoken naturally, no lists or colons.",
+      "footage_query": "3-5 word concrete visual scene for vertical stock footage"
     }}
   ]
 }}
 
-Hard rules:
-- Exactly 5 points. No more, no less.
-- Every word count limit is a hard ceiling — count words before responding.
-- Body text must sound natural when read aloud — no bullet points, no lists, no colons mid-sentence.
-- footage_query must be a scene you could film — not abstract.
-- Title must NOT use all-caps words or excessive punctuation.
-- JSON only. Nothing before or after the JSON object."""
+Here is a CORRECT example output for topic "sleep habits" — match this length exactly:
+{{
+  "title": "3 Sleep Facts That Will Shock You",
+  "description": "Three surprising psychology facts about sleep. Neuroscience and dark psychology explained simply.",
+  "tags": ["sleep", "psychology", "facts", "neuroscience", "shorts"],
+  "intro": "You have been sleeping wrong your entire life and your brain is suffering because of it.",
+  "outro": "Follow for more facts that change how you see yourself.",
+  "points": [
+    {{
+      "heading": "Dreams erase memories",
+      "body": "During REM sleep your brain actively deletes information it deems useless, which is why you forget ninety percent of your dreams within ten minutes of waking.",
+      "footage_query": "person sleeping restlessly at night"
+    }},
+    {{
+      "heading": "Sleep debt is real",
+      "body": "Missing just one hour of sleep reduces your cognitive performance by thirty percent, and you cannot recover that deficit by sleeping in on weekends.",
+      "footage_query": "tired person at office desk"
+    }},
+    {{
+      "heading": "Brain stays half awake",
+      "body": "In a new place your brain keeps one hemisphere alert all night as a survival mechanism, which is why your first night somewhere unfamiliar always feels terrible.",
+      "footage_query": "person lying awake in dark room"
+    }}
+  ]
+}}
+
+Now write the same quality and length for topic: "{topic}"
+Same structure. Same word density per section. JSON only."""
 
 
 # ── Backend: Groq ─────────────────────────────────────────────────────────────
@@ -225,18 +256,35 @@ def _parse_json(raw: str) -> dict:
 # ── Word count enforcement ────────────────────────────────────────────────────
 
 def _enforce_limits(script: dict) -> dict:
+    """Trim overlong fields and warn on underlong ones."""
+    warnings = []
+
+    # Intro: 12-15 words
     intro_words = script["intro"].split()
-    if len(intro_words) > 25:
-        script["intro"] = " ".join(intro_words[:25])
+    if len(intro_words) < 12:
+        warnings.append(f"Intro too short ({len(intro_words)} words, min 12).")
+    if len(intro_words) > 15:
+        script["intro"] = " ".join(intro_words[:15])
 
+    # Outro: 10-12 words
     outro_words = script["outro"].split()
-    if len(outro_words) > 18:
-        script["outro"] = " ".join(outro_words[:18])
+    if len(outro_words) < 10:
+        warnings.append(f"Outro too short ({len(outro_words)} words, min 10).")
+    if len(outro_words) > 12:
+        script["outro"] = " ".join(outro_words[:12])
 
-    for point in script["points"]:
+    # Each point body: 18-22 words
+    for i, point in enumerate(script["points"]):
         body_words = point["body"].split()
-        if len(body_words) > 28:
-            point["body"] = " ".join(body_words[:28])
+        if len(body_words) < 18:
+            warnings.append(f"Point {i+1} too short ({len(body_words)} words, min 18).")
+        if len(body_words) > 22:
+            point["body"] = " ".join(body_words[:22])
+
+    if warnings:
+        print("      [Warnings — model returned short content, running anyway]")
+        for w in warnings:
+            print(f"        - {w}")
 
     return script
 
@@ -249,9 +297,9 @@ def _validate(script: dict) -> dict:
         if key not in script:
             raise ValueError(f"\n[!] Script missing field: '{key}'. Run again.\n")
 
-    if not isinstance(script["points"], list) or len(script["points"]) != 5:
+    if not isinstance(script["points"], list) or len(script["points"]) != 3:
         raise ValueError(
-            f"\n[!] Expected 5 points, got {len(script.get('points', []))}. Run again.\n"
+            f"\n[!] Expected 3 points, got {len(script.get('points', []))}. Run again.\n"
         )
 
     for i, point in enumerate(script["points"]):
